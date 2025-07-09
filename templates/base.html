@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}Arboreal: Diagram Annotation{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tagify/4.33.0/tagify.css">
+  <link rel="icon" type="image/png" href="/static/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+  <link rel="shortcut icon" href="/static/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-title" content="StructQA" />
+  <link rel="manifest" href="/static/site.webmanifest" />
+  <link type="text/css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css"/>
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+  <!-- Highlight.js CSS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+  <script>hljs.highlightAll();</script>
+  <style>
+    .dark-mode { background-color: #191b2b; color: #e9efd0; }
+    .light-mode { background-color: #fefefe; color: #191b2b; }
+  </style>
+</head>
+{% if session.mode %}
+  {% if session.mode == 'light' %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
+    <body class="light-mode" id="body">
+      <nav class="navbar navbar-expand-lg navbar-light bg-light">
+  {% else %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.8.0/build/styles/vs2015.min.css">
+    <body class="dark-mode" id="body">
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  {% endif %}
+{% else %}
+  <body class="light-mode" id="body">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+{% endif %}
+      <div class="container">
+        <a class="navbar-brand" href="{{ url_for('index') }}">Arboreal</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav mr-auto">
+            {% if session.username %}
+              {% if session.role == 'admin' %}
+                  <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_dashboard') }}">[Admin]</a></li>
+              {% endif %}
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a></li>
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('dataset') }}">Dataset</a></li>
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('help') }}">Help</a></li>              
+            {% else %}
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('dataset') }}">Dataset</a></li>
+            {% endif %}
+          </ul>
+          <ul class="navbar-nav">
+            <li class="nav-item">
+              <a class="btn btn-secondary" href="{{ url_for('toggle_theme') }}" style="opacity:0.8;">
+                Switch to {{ 'Dark Mode' if session.get('mode', 'light') == 'light' else 'Light Mode'}}
+                </a>
+            </li>
+            {% if session.username %}
+              <li class="nav-item">
+                <a class="btn btn-outline-primary ml-2" href="{{ url_for('logout') }}">
+                  Logout ({{ session.username }})
+                </a>
+              </li>
+            {% else %}
+              <li class="nav-item">
+                <a class="btn btn-outline-primary ml-2" href="{{ url_for('login') }}">Login</a>
+              </li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </nav>
+  
+  <div class="container mt-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </div>
+
+  <!-- Tagify JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.polyfills.min.js"></script>
+  <!-- Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+  
+  {% block extra_scripts %} {% endblock %}
+</body>
+</html>

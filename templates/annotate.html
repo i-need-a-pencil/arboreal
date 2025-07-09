@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}Annotate{% endblock %}
+{% block content %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='annotate-style.css') }}"/>
+
+  <!-- Selection Popup HTML -->
+  <div id="selection-popup"  class="{{session.mode|default('light')}}-mode">
+    Add "<b><span id="selected-text">...</span></b>"?
+    <button id="add-entity-btn" class="btn">OK</button>
+    <button id="cancel-entity-btn" class="btn">Cancel</button>
+  </div>
+
+  <div class="container-fluid">
+    {% if session.mode %}
+    <div class="query-floating-panel-{{session.mode}}-mode mb-4 query-floating-panel">
+    {% else %}
+    <div class="query-floating-panel-light-mode mb-4 query-floating-panel">
+    {% endif %}
+      <div class="row">
+
+        <div class="col-12 d-flex align-items-center">
+          <span class="query-title">Query:</span>
+          <span class="query-text">{{ annotation.query }} in <b>{{ annotation.repo }} ({{ annotation.language|default('python') }})</b></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content Row: Three Columns -->
+    <div class="row">
+      <!-- Left Column: Code -->
+      <div class="col-lg-5 mb-3">
+        <div class="code-pre">
+          <pre><code class="{{ annotation.language|default('python') }}">{{ annotation.code }}</code></pre>
+        </div>
+      </div>
+
+      <div class="col">
+        <div style="text-align:center;">
+          <form method="POST" id="annotation_form">
+            <button type="submit" name="action" value="save" class="btn btn-primary">Save</button>
+            <button type="submit" name="action" value="finalize" class="btn btn-success">Finalize</button>
+            <br/><br/>
+
+            <input type="radio" class="btn-check sufficiency" name="option" id="Sufficiency" autocomplete="off">
+            <label class="btn btn-secondary sufficiency" for="Sufficiency">Sufficiency</label>
+
+            <input type="radio" class="btn-check completeness" name="option" id="Completeness" autocomplete="off">
+            <label class="btn btn-secondary completeness" for="Completeness">Completeness</label>
+
+            <input type="radio" class="btn-check hallucinations" name="option" id="Hallucinations" autocomplete="off">
+            <label class="btn btn-secondary hallucinations" for="Hallucinations">Hallucinations</label>
+
+            <input type="radio" class="btn-check verbosity" name="option" id="Verbosity" autocomplete="off">
+            <label class="btn btn-secondary verbosity" for="Verbosity">Verbosity</label>
+
+            &nbsp;&nbsp;
+            <input type="radio" class="btn-check unlabel" name="option" id="Unlabel" autocomplete="off" checked>
+            <label class="btn btn-secondary unlabel" for="Unlabel">Unlabel</label>
+
+            <input
+              type="hidden"
+              name="nodes"
+              id="nodes_input"
+              value='{{ (annotation.nodes
+                  or {
+                    "Sufficiency":   [], "Completeness":  [],
+                    "Hallucinations":[], "Verbosity":     []
+                  }
+                ) | tojson }}'
+            />
+          </form>
+        </div>
+
+        <!-- Mermaid Diagram -->
+        <div>
+          <div class="mermaid"
+               id="mermaid-div-container"
+               style="border:1px dotted gray;">
+            {{ annotation.diagram }}
+          </div>
+          <div style="text-align:center; font-size:10pt;">
+            <span class="node-baseclass">class</span>
+            <span class="node-variable">variable</span>
+            <span class="node-function">function</span>
+            <span class="node-entity">entity</span>
+            <span class="node-method">method</span>
+            <span class="node-field">field</span>
+          </div>
+          <!-- Labeled / Unlabeled Lists -->
+          <div style="font-size:8pt;">
+                <span style="color:black;">Labeled:</span>
+                <span class="sufficiency-text" id="sufficiency-list">...</span>
+                <span class="completeness-text" id="completeness-list">...</span>
+                <span class="hallucinations-text" id="hallucinations-list">...</span>
+                <span class="verbosity-text" id="verbosity-list">...</span><br/>
+                <span style="color:black;">Unlabeled:</span>
+                <span class="unlabeled-text" id="unlabeled-list">...</span>
+          </div>
+          <br/>
+
+          <!-- What's Missing? Tagify Input (Not Used in Study) -->
+          <div id="missing-section">
+            <label for="missing-input"><strong>What's missing?</strong></label><br/>
+            <input name="missing"
+                   id="missing-input"
+                   placeholder="Select code to add"/>
+          </div>
+          <br/>
+          <div id="notes-section">
+            <label for="notes-input"><strong>Other comments</strong></label><br/>
+            <textarea name="notes" id="notes-input" placeholder="Your comments, if any"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+{% block extra_scripts %}
+  <script src="https://bumbu.me/svg-pan-zoom/dist/svg-pan-zoom.js"></script>
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+  <script>
+    let nodesMap = {{ (annotation.nodes
+        or {
+          "Sufficiency":   [], "Completeness":  [],
+          "Hallucinations":[], "Verbosity":     []
+        }
+      ) | tojson }};
+    let missing = {{ (annotation.missing or []) | tojson }};
+    let notes = {{ (annotation.notes or "") | tojson }};
+    console.log('From DB:', nodesMap);
+    console.log('Missing:', missing);
+    console.log('Notes:', notes);
+  </script>
+
+  <!-- Mermaid & Tagify Initialization & Selection Logic -->
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.3.0/dist/mermaid.esm.min.mjs';
+
+    mermaid.initialize({
+        startOnLoad: true,
+        securityLevel: 'loose'
+    });
+
+    mermaid.run({
+      querySelector: '.mermaid',
+      postRenderCallback: (id) => {
+        applySavedAnnotations();
+        const el = document.querySelector('#' + id);
+        el.setAttribute('height','300px');
+        const svg = el.outerHTML.replace(/[ ]*max-width:[ 0-9\.]*px;/i,'');
+        document.querySelector('#mermaid-div-container').innerHTML = svg;
+        svgPanZoom('#' + id, {
+          zoomEnabled: true,
+          controlIconsEnabled: false,
+          fit: true,
+          center: true
+        });
+        updateLocalProgress();
+      }
+    });
+  </script>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+<h2>Admin Dashboard</h2>
+<a class="btn btn-primary mb-3" href="{{ url_for('admin_upload') }}">Upload Task</a>
+<a class="btn btn-secondary mb-3" href="{{ url_for('manage_users') }}">Manage Users</a>
+<a class="btn btn-info mb-3" href="{{ url_for('admin_view_annotations') }}">View All Annotations</a>
+<a class="btn btn-info mb-3" href="{{ url_for('export_annotations') }}">Export Annotations</a>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th>Task Name</th>
+      <th>Task ID</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for task in tasks %}
+      <tr>
+        <td>{{ task.name }}</td>
+        <td>{{ task._id }}</td>
+        <td>
+          <a class="btn btn-sm btn-danger" href="{{ url_for('delete_task', task_id=task._id) }}">Remove Task</a>
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

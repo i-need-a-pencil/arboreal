@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h2>My Annotation Dashboard</h2>
+
+
+{% set total_tasks    = tasks|length %}
+{% set total_samples  = tasks|map(attribute='total')|sum %}
+{% set total_final    = tasks|map(attribute='annotation_counts')|map(attribute='Finalized')|sum %}
+{% set completion_pct = (total_final * 100 // total_samples) if total_samples > 0 else 0 %}
+
+<div class="row mb-4">
+  <div class="col-sm-3">
+    <div class="card border-info">
+      <div class="card-body text-info">
+        <h5 class="card-title">Tasks</h5>
+        <p class="card-text display-6">{{ total_tasks }}</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-3">
+    <div class="card border-secondary">
+      <div class="card-body text-secondary">
+        <h5 class="card-title">Samples</h5>
+        <p class="card-text display-6">{{ total_samples }}</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-3">
+    <div class="card border-success">
+      <div class="card-body text-success">
+        <h5 class="card-title">Finalized</h5>
+        <p class="card-text display-6">{{ total_final }}</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-3">
+    <div class="card border-warning">
+      <div class="card-body text-warning">
+        <h5 class="card-title">Overall %</h5>
+        <p class="card-text display-6">{{ completion_pct }}%</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<table class="table table-hover">
+  <thead class="table-light">
+    <tr>
+      <th>Task Name</th>
+      <th>Not Annotated</th>
+      <th>In Progress</th>
+      <th>Finalized</th>
+      <th style="width: 30%;">Progress</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for task in tasks %}
+      {% set c   = task.annotation_counts %}
+      {% set tot = task.total %}
+      {% set pct = (c['Finalized'] * 100 // tot) if tot > 0 else 0 %}
+      <tr>
+        <td>{{ task.name }}</td>
+        <td>{{ c['Not Annotated'] }}</td>
+        <td>{{ c['In Progress'] }}</td>
+        <td>{{ c['Finalized'] }}</td>
+        <td>
+          <div class="progress" style="height: 1.25rem;">
+            <div class="progress-bar"
+                 role="progressbar"
+                 style="width: {{ pct }}%;"
+                 aria-valuenow="{{ pct }}"
+                 aria-valuemin="0"
+                 aria-valuemax="100">
+              {{ pct }}%
+            </div>
+          </div>
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

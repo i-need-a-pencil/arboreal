@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Dataset{% endblock %}
+{% block content %}
+<h2>Dataset</h2>
+
+<form method="get" action="{{ url_for('dataset') }}" class="mb-3">
+  <label for="task-select" class="form-label">Choose a dataset:</label>
+  <select id="task-select" name="task_id" class="form-select"
+          onchange="this.form.submit()">
+    <option value="" {% if not selected_task_id %}selected{% endif %}>
+      — All datasets —
+    </option>
+    {% for task in tasks %}
+      <option value="{{ task._id }}"
+              {% if task._id|string == selected_task_id %}selected{% endif %}>
+        {{ task.name }}
+      </option>
+    {% endfor %}
+  </select>
+</form>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th>Sample ID</th>
+      <th>Snippet</th>
+      <th>Status</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for ann in annotations %}
+    <tr>
+      <td>{{ ann.sample_id }}</td>
+      <td>{{ ann.code[:50] }}...</td>
+      {% if ann.status != 'Finalized' %}
+        <td>{{ ann.status }}</td>
+      {% else %}
+        <td><span style="color:gray; opacity:0.7;">{{ ann.status }}</span></td>
+      {% endif %}
+      <td>
+        {% if session.username and session.role != 'admin' %}
+          <a class="btn btn-sm btn-primary"
+             href="{{ url_for('annotate', sample_id=ann.sample_id) }}">
+            Annotate
+          </a>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

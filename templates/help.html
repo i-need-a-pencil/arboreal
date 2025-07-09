@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}INFORMATION{% endblock %}
+{% block content %}
+  <h2>Annotation Instructions</h2>
+    <p>All nodes in the diagram must be labeled with one of these 4 categories.
+        To do this, click the corresponding button and then click on the node.</p>
+    <br/>
+    <table class="table">
+      <tbody>
+          <tr>
+              <th>Sufficiency</th>
+              <td>Nodes that must be present in the diagram
+              to answer the user's query</td>
+          </tr>
+          <tr>
+              <th>Completeness</th>
+              <td>Nodes that don't have to be in the diagram,
+              but whose presence is helpful for understanding</td>
+          </tr>
+          <tr>
+              <th>Hallucinations</th>
+              <td>Incorrect or unjustifiable
+              (fabricated and irrelevant) nodes</td>
+          </tr>
+          <tr>
+              <th>Verbosity</th>
+              <td>Superfluous nodes: entities from the code
+              that should not be in the diagram answering the query</td>
+          </tr>
+      </tbody>
+    </table>
+
+    <p>If the query mentions a specific entity, you can confidently mark it as Sufficiency.</p>
+    <p>How to distinguish Sufficiency from Completeness: imagine
+        that the node in question is absent from the diagram. Does the diagram
+        still provide enough information for a direct answer? If yes, then it's Completeness;
+        if something essential to the answer's core meaning is missing, then it's Sufficiency.</p>
+{% endblock %}

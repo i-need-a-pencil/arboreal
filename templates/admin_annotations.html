@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}All Annotations{% endblock %}
+{% block content %}
+<h2>All Annotations</h2>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Task ID</th>
+      <th>Annotator</th>
+      <th>Status</th>
+      <th>Code Snippet</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for ann in annotations %}
+      <tr>
+        <td>{{ ann.task_id }}</td>
+        <td>{{ ann.annotator }}</td>
+        <td>{{ ann.status }}</td>
+        <td>{{ ann.code[:50] }}...</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
